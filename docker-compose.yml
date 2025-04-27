@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: supabase-poc-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: supabase_poc
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pubsub:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    container_name: supabase-poc-pubsub
+    entrypoint: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=supabase-poc
+    ports:
+      - "8085:8085"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8085"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - PUBSUB_PROJECT_ID=supabase-poc
+
+volumes:
+  postgres-data:
